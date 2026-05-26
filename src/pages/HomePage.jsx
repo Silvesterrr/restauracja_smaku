@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom'; 
 import MenuCard from '../components/MenuCard';
 
 import imageStek from '../assets/images/stek.png';
@@ -51,12 +52,13 @@ function HomePage() {
             <p style={{ margin: 0, color: '#444651', fontSize: '16px', fontFamily: "'Inter', sans-serif", fontWeight: 400, lineHeight: '25.60px' }}>
               W Restauracji Smak wierzymy, że prawdziwa kulinarna podróż zaczyna się od szacunku do lokalnych składników. Nasi szefowie kuchni czerpią inspirację z klasycznych polskich receptur, nadając im lekkość i nowoczesny wyraz. Każde danie to starannie skomponowana symfonia smaków, podana w minimalistycznej oprawie, która pozwala składnikom mówić samym za siebie.
             </p>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginTop: '16px', cursor: 'pointer' }}>
+            
+            <Link to="/o-nas" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginTop: '16px', cursor: 'pointer', textDecoration: 'none' }}>
               <span style={{ color: '#7B5804', fontSize: '15px', fontFamily: "'Inter', sans-serif", fontWeight: 600, lineHeight: '15px', letterSpacing: '0.30px' }}>
                 Dowiedz się więcej
               </span>
               <div style={{ width: '16px', height: '16px', background: '#7B5804', clipPath: 'polygon(0 0, 100% 50%, 0 100%)' }}></div>
-            </div>
+            </Link>
           </div>
           <div style={{ flex: 1, borderRadius: '4px', overflow: 'hidden', outline: '1px rgba(197, 197, 211, 0.30) solid' }}>
             <img style={{ width: '100%', height: '450px', objectFit: 'cover', display: 'block' }} src={imageWnetrze} alt="Wnętrze Restauracji" />
