@@ -1,5 +1,3 @@
-import React from 'react';
-
 function MenuCard({ title, description, imageSrc }) {
   return (
     <div style={{

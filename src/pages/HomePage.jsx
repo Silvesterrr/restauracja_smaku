@@ -1,5 +1,4 @@
-import React from 'react';
-import { Link } from 'react-router-dom'; 
+import { Link } from 'react-router-dom';
 import MenuCard from '../components/MenuCard';
 
 import imageStek from '../assets/images/stek.png';

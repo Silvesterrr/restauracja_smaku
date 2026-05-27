@@ -1,13 +1,14 @@
-:root {
-  --bg-color: #121212;
-  --accent-color: #D4AF37; /* Złoty kolor z Figmy */
-  --text-color: #ffffff;
-  --font-main: 'Inter', sans-serif;
+@import './styles/tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  font-family: var(--font-main);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
 }

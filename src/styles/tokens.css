@@ -1,0 +1,41 @@
+:root {
+  /* Kolory marki */
+  --color-navy: #1E3A8A;
+  --color-navy-deep: #00236F;
+  --color-gold: #D4A853;
+  --color-gold-dark: #7B5804;
+  --color-gold-light: #FFDEA6;
+
+  /* Tekst */
+  --color-text: #444651;
+  --color-text-muted: #64748B;
+  --color-text-nav: #475569;
+  --color-text-dark: #1F2937;
+
+  /* Tła */
+  --color-bg: #FAF7F2;
+  --color-bg-alt: #FAF8FF;
+  --color-bg-alt-2: #F4F3FA;
+  --color-surface: #FFFFFF;
+
+  /* Obramowania / linie */
+  --color-border: #E3E1E9;
+  --color-border-soft: #E5E7EB;
+  --color-border-input: #C5C5D3;
+  --color-gold-border: rgba(212, 168, 83, 0.20);
+
+  /* Stan sukcesu (formularze) */
+  --color-success: #16A34A;
+  --color-success-dark: #137333;
+  --color-success-bg: #F0FDF4;
+
+  /* Typografia */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Noto Serif', 'Liberation Serif', Georgia, serif;
+
+  /* Layout */
+  --container-max: 1200px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+}

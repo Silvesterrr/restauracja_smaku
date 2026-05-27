@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import styles from './App.module.css';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
@@ -10,9 +11,9 @@ function App() {
   return (
     <Router>
   
-      <div className="flex flex-col min-h-screen bg-[#FAF7F2]">
+      <div className={styles.app}>
         <Navbar />
-        <main className="flex-grow">
+        <main className={styles.main}>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/o-nas" element={<AboutPage />} />
