@@ -30,13 +30,13 @@ function Footer() {
 
         {/* Zamieniamy divy na komponenty Link i dodajemy reset domyślnego wyglądu linku  */}     
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <Link to="/" style={footerLinkStyle}>Godziny otwarcia</Link>
-          <Link to="/" style={footerLinkStyle}>Polityka prywatności</Link>
+          <Link to="/kontakt" style={footerLinkStyle}>Godziny otwarcia</Link>
+          <span style={{ ...footerLinkStyle, cursor: 'default' }}>Polityka prywatności</span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <Link to="/" style={footerLinkStyle}>Regulamin</Link>
-          <Link to="/o-nas" style={{ ...footerLinkStyle, color: '#D4A853' }}>Kontakt</Link> 
+          <span style={{ ...footerLinkStyle, cursor: 'default' }}>Regulamin</span>
+          <Link to="/kontakt" style={{ ...footerLinkStyle, color: '#D4A853' }}>Kontakt</Link>
         </div>
       </div>
     </footer>

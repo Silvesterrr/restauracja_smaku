@@ -11,6 +11,10 @@
   --color-text-muted: #64748B;
   --color-text-nav: #475569;
   --color-text-dark: #1F2937;
+  --color-ink: #1a1b21;
+  --color-text-soft: #757682;
+  --color-placeholder: #6b7280;
+  --color-img-placeholder: #eeedf4;
 
   /* Tła */
   --color-bg: #FAF7F2;

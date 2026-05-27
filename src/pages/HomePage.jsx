@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import MenuCard from '../components/MenuCard';
 
 import imageStek from '../assets/images/stek.png';
@@ -8,6 +8,8 @@ import imageGlowne from '../assets/images/glowne.png';
 import imageDeser from '../assets/images/deser.png';
 
 function HomePage() {
+  const navigate = useNavigate();
+
   return (
     <div style={{ width: '100%', background: 'white' }}>
       
@@ -22,10 +24,10 @@ function HomePage() {
               Kuchnia polska z nowoczesnym akcentem. Odkryj harmonię tradycyjnych smaków podanych w eleganckiej, współczesnej formie.
             </p>
             <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
-              <button style={{ padding: '17px 32px', background: '#00236F', color: 'white', border: 'none', borderRadius: '2px', fontSize: '15px', fontFamily: "'Inter', sans-serif", fontWeight: 600, lineHeight: '15px', letterSpacing: '0.30px', cursor: 'pointer', boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)' }}>
+              <button onClick={() => navigate('/rezerwacje')} style={{ padding: '17px 32px', background: '#00236F', color: 'white', border: 'none', borderRadius: '2px', fontSize: '15px', fontFamily: "'Inter', sans-serif", fontWeight: 600, lineHeight: '15px', letterSpacing: '0.30px', cursor: 'pointer', boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.05)' }}>
                 Zarezerwuj stolik
               </button>
-              <button style={{ padding: '16px 32px', background: 'transparent', color: '#7B5804', borderRadius: '2px', border: '1px #7B5804 solid', fontSize: '15px', fontFamily: "'Inter', sans-serif", fontWeight: 600, lineHeight: '15px', letterSpacing: '0.30px', cursor: 'pointer' }}>
+              <button onClick={() => navigate('/menu')} style={{ padding: '16px 32px', background: 'transparent', color: '#7B5804', borderRadius: '2px', border: '1px #7B5804 solid', fontSize: '15px', fontFamily: "'Inter', sans-serif", fontWeight: 600, lineHeight: '15px', letterSpacing: '0.30px', cursor: 'pointer' }}>
                 Zobacz Menu
               </button>
             </div>

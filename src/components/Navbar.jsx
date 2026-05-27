@@ -1,6 +1,7 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 function Navbar() {
+  const navigate = useNavigate();
   const location = useLocation();
 
   const linkDefault = {
@@ -49,11 +50,11 @@ function Navbar() {
           <Link to="/rezerwacje" style={location.pathname === '/rezerwacje' ? linkActive : linkDefault}>REZERWACJE</Link>
           <Link to="/kontakt" style={location.pathname === '/kontakt' ? linkActive : linkDefault}>KONTAKT</Link>
           <Link to="/galeria" style={location.pathname === '/galeria' ? linkActive : linkDefault}>GALERIA</Link>
-          <Link to="/okazje" style={{ ...linkDefault, fontWeight: 400, color: location.pathname === '/okazje' ? '#1E3A8A' : '#475569' }}>OKAZJE</Link>
+          <Link to="/okazje" style={location.pathname === '/okazje' ? linkActive : linkDefault}>OKAZJE</Link>
         </div>
 
         {/*przyciski */}
-        <button style={{ padding: '12px 24px', background: '#1E3A8A', borderRadius: '2px', border: 'none', color: 'white', fontSize: '15px', fontFamily: "'Inter', sans-serif", fontWeight: 600, textTransform: 'uppercase', lineHeight: '15px', letterSpacing: '0.75px', cursor: 'pointer' }}>
+        <button onClick={() => navigate('/rezerwacje')} style={{ padding: '12px 24px', background: '#1E3A8A', borderRadius: '2px', border: 'none', color: 'white', fontSize: '15px', fontFamily: "'Inter', sans-serif", fontWeight: 600, textTransform: 'uppercase', lineHeight: '15px', letterSpacing: '0.75px', cursor: 'pointer' }}>
           ZAREZERWUJ STOLIK
         </button>
 
