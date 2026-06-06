@@ -1,0 +1,196 @@
+.page {
+  width: 100%;
+  min-height: 70vh;
+  padding: 72px 24px 96px;
+  background: var(--color-bg);
+}
+
+.narrow {
+  width: min(100%, 480px);
+  margin: 0 auto;
+  padding: 36px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-gold-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 45px var(--color-shadow-navy);
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--color-gold-dark);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  color: var(--color-navy);
+  font-family: var(--font-serif);
+  font-size: clamp(32px, 5vw, 46px);
+  line-height: 1.15;
+}
+
+.description {
+  margin: 16px 0 28px;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+}
+
+.form {
+  display: grid;
+  gap: 20px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.label {
+  color: var(--color-text-dark);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.input {
+  width: 100%;
+  padding: 13px 14px;
+  color: var(--color-text-dark);
+  font: inherit;
+  background: var(--color-white);
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-md);
+}
+
+.input:focus {
+  border-color: var(--color-navy);
+  outline: 3px solid var(--color-focus-navy);
+}
+
+.button,
+.secondaryButton {
+  min-height: 46px;
+  padding: 12px 22px;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.button {
+  color: var(--color-white);
+  background: var(--color-navy);
+  border: 1px solid var(--color-navy);
+}
+
+.secondaryButton {
+  color: var(--color-navy);
+  background: transparent;
+  border: 1px solid var(--color-navy);
+}
+
+.button:disabled,
+.secondaryButton:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.error {
+  margin: 0;
+  padding: 12px 14px;
+  color: var(--color-error);
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-error-border);
+  border-radius: var(--radius-md);
+  line-height: 1.5;
+}
+
+.statePage {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  min-height: 60vh;
+  padding: 48px 24px;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--color-border-soft);
+  border-top-color: var(--color-navy);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.admin {
+  width: min(100%, var(--container-max));
+  margin: 0 auto;
+}
+
+.adminHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.dateBadge {
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  color: var(--color-gold-dark);
+  background: var(--color-gold-surface-strong);
+  border: 1px solid var(--color-gold-border-strong);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.reservationList {
+  display: grid;
+  gap: 16px;
+}
+
+.emptyState {
+  padding: 48px 24px;
+  color: var(--color-text-muted);
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border-input);
+  border-radius: var(--radius-lg);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 48px 16px 72px;
+  }
+
+  .narrow {
+    padding: 28px 22px;
+  }
+
+  .adminHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

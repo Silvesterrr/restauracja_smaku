@@ -1,345 +1,569 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Fragment, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { submitReservation } from '../services/reservations'
+import {
+  addDaysToDateKey,
+  buildDateKey,
+  dateKeyParts,
+  getWarsawDateKey,
+  monthKey,
+} from '../utils/date'
+import {
+  AVAILABLE_TIMES,
+  buildReservationFields,
+  HALLS,
+  validateReservationFields,
+} from '../utils/reservationForm'
+import styles from './Reservations.module.css'
+
+const MONTHS = [
+  'Styczeń',
+  'Luty',
+  'Marzec',
+  'Kwiecień',
+  'Maj',
+  'Czerwiec',
+  'Lipiec',
+  'Sierpień',
+  'Wrzesień',
+  'Październik',
+  'Listopad',
+  'Grudzień',
+]
+
+const INITIAL_FORM_DATA = {
+  selectedDay: null,
+  selectedTime: '19:00',
+  guests: '2',
+  selectedHall: '',
+  name: '',
+  phone: '',
+  email: '',
+  notes: '',
+}
 
 function Reservations() {
-  const navigate = useNavigate();
-  const [step, setStep] = useState(1);
+  const navigate = useNavigate()
+  const [today] = useState(() => getWarsawDateKey())
+  const [maximumDate] = useState(() => addDaysToDateKey(today, 180))
+  const initialDate = useMemo(() => dateKeyParts(today), [today])
+  const [currentDate, setCurrentDate] = useState(
+    () => new Date(initialDate.year, initialDate.monthIndex, 1),
+  )
+  const [step, setStep] = useState(1)
+  const [formData, setFormData] = useState(INITIAL_FORM_DATA)
+  const [submissionStatus, setSubmissionStatus] = useState('idle')
+  const [submissionError, setSubmissionError] = useState('')
+  const [retryable, setRetryable] = useState(false)
+  const [savedReservation, setSavedReservation] = useState(null)
 
-  // aktualna data
-  const todayDate = new Date();
-  const [currentDate, setCurrentDate] = useState(new Date());
-
-  // stan rezerwacji
-  const [formData, setFormData] = useState({
-    selectedDay: null, 
-    selectedTime: '19:00',
-    guests: '2',
-    selectedHall: '',
-    name: '',
-    phone: '',
-    email: '',
-    notes: ''
-  });
-
-  const months = [
-    'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec',
-    'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'
-  ];
-
-  const year = currentDate.getFullYear();
-  const monthIndex = currentDate.getMonth();
-
-  // generowanie dni dla wybranego miesiąca
-  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-  let firstDayIndex = new Date(year, monthIndex, 1).getDay() - 1;
-  if (firstDayIndex === -1) firstDayIndex = 6; 
-
-  // lista godizn co pół godziny
-  const availableTimes = [
-    '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', 
-    '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', 
-    '18:00', '18:30', '19:00', '19:30', '20:00'
-  ];
-
-  const handlePrevMonth = () => {
-    setFormData(p => ({ ...p, selectedDay: null }));
-    setCurrentDate(new Date(year, monthIndex - 1, 1));
-  };
-
-  const handleNextMonth = () => {
-    setFormData(p => ({ ...p, selectedDay: null }));
-    setCurrentDate(new Date(year, monthIndex + 1, 1));
-  };
+  const year = currentDate.getFullYear()
+  const monthIndex = currentDate.getMonth()
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate()
+  const firstWeekday = new Date(year, monthIndex, 1).getDay()
+  const firstDayIndex = firstWeekday === 0 ? 6 : firstWeekday - 1
+  const currentMonth = monthKey(year, monthIndex)
+  const minimumMonth = today.slice(0, 7)
+  const maximumMonth = maximumDate.slice(0, 7)
+  const formLocked = submissionStatus === 'submitting' || retryable
 
   const goToStep = (nextStep) => {
-    setStep(nextStep);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+    setStep(nextStep)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  const changeMonth = (direction) => {
+    const nextDate = new Date(year, monthIndex + direction, 1)
+    const nextMonth = monthKey(
+      nextDate.getFullYear(),
+      nextDate.getMonth(),
+    )
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    goToStep(4);
-  };
+    if (nextMonth < minimumMonth || nextMonth > maximumMonth) {
+      return
+    }
 
-  // postęp rezerwacji
+    setFormData((previous) => ({
+      ...previous,
+      selectedDay: null,
+    }))
+    setCurrentDate(nextDate)
+  }
+
+  const updateForm = (name, value) => {
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }))
+    setSubmissionError('')
+    setSubmissionStatus('idle')
+  }
+
+  const updateGuests = (difference) => {
+    const guests = Math.min(
+      20,
+      Math.max(1, Number(formData.guests) + difference),
+    )
+    updateForm('guests', String(guests))
+  }
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+    const serviceDate = buildDateKey(
+      year,
+      monthIndex,
+      formData.selectedDay,
+    )
+    const fields = buildReservationFields(formData, serviceDate)
+    const validationError = validateReservationFields(
+      fields,
+      today,
+      maximumDate,
+    )
+
+    if (validationError) {
+      setSubmissionStatus('error')
+      setSubmissionError(validationError)
+      setRetryable(false)
+      return
+    }
+
+    setSubmissionStatus('submitting')
+    setSubmissionError('')
+    setRetryable(false)
+
+    try {
+      const savedPayload = await submitReservation(fields)
+      setSavedReservation(savedPayload)
+      setSubmissionStatus('success')
+      goToStep(4)
+    } catch (error) {
+      setSubmissionStatus('error')
+      setSubmissionError(
+        error.message || 'Nie udało się zapisać rezerwacji.',
+      )
+      setRetryable(Boolean(error.retryable))
+    }
+  }
+
   const renderStepper = () => {
-    const stepsInfo = [
-      { num: 1, label: 'Terminarz' },
-      { num: 2, label: 'Sala' },
-      { num: 3, label: 'Dane' },
-      { num: 4, label: 'Potwierdzenie' }
-    ];
+    const steps = [
+      { number: 1, label: 'Terminarz' },
+      { number: 2, label: 'Sala' },
+      { number: 3, label: 'Dane' },
+      { number: 4, label: 'Gotowe' },
+    ]
 
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', margin: '40px auto 40px auto', maxWidth: '900px', padding: '0 20px' }}>
-        {stepsInfo.map((s, index) => {
-          const isCompleted = step > s.num;
-          const isActive = step === s.num;
+      <div className={styles.stepper} aria-label="Etapy rezerwacji">
+        {steps.map((item, index) => {
+          const active = step >= item.number
+
           return (
-            <React.Fragment key={s.num}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '12px 20px',
-                background: isCompleted || isActive ? '#16A34A' : '#E5E7EB',
-                borderRadius: '30px',
-                color: isCompleted || isActive ? 'white' : '#9CA3AF',
-                fontFamily: "'Inter', sans-serif",
-                fontSize: '13px',
-                fontWeight: 600,
-                flex: 1,
-                justifyContent: 'center'
-              }}>
-                <span style={{ width: '20px', height: '20px', background: isCompleted || isActive ? 'rgba(255,255,255,0.2)' : 'transparent', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>{s.num}</span>
-                <span style={{ textTransform: 'uppercase', letterSpacing: '0.5px' }}>{s.label}</span>
+            <Fragment key={item.number}>
+              <div
+                className={`${styles.step} ${
+                  active ? styles.stepActive : ''
+                }`}
+                aria-current={step === item.number ? 'step' : undefined}
+              >
+                <span className={styles.stepNumber}>
+                  {item.number}
+                </span>
+                <span>{item.label}</span>
               </div>
-              {index < stepsInfo.length - 1 && <div style={{ height: '2px', background: '#E5E7EB', flex: '0 0 10px' }} />}
-            </React.Fragment>
-          );
+              {index < steps.length - 1 && (
+                <div className={styles.stepLine} aria-hidden="true" />
+              )}
+            </Fragment>
+          )
         })}
       </div>
-    );
-  };
+    )
+  }
 
   return (
-    <div style={{ width: '100%', background: 'white', minHeight: '80vh', padding: '1px 0 100px 0', boxSizing: 'border-box' }}>
-      
-      {/* nagłówek */}
+    <div className={styles.page}>
       {step < 4 && (
-        <section style={{ textAlign: 'center', padding: '60px 20px 30px 20px', background: 'white' }}>
-          <h1 style={{ margin: '0 0 16px 0', color: '#1E3A8A', fontSize: '42px', fontFamily: "'Noto Serif', serif", fontWeight: 700 }}>
-            Rezerwacja Stolika
-          </h1>
-          <p style={{ margin: '0 auto', color: '#64748B', fontSize: '16px', fontFamily: "'Inter', sans-serif", maxWidth: '650px', lineHeight: '26px' }}>
-            Zapraszamy do rezerwacji online. Wybierz dogodny termin, salę oraz podaj niezbędne dane, abyśmy mogli przygotować dla Ciebie idealne miejsce.
+        <section className={styles.hero}>
+          <h1 className={styles.heroTitle}>Rezerwacja stolika</h1>
+          <p className={styles.heroText}>
+            Wybierz dogodny termin, salę oraz podaj dane potrzebne do
+            przygotowania stolika.
           </p>
         </section>
       )}
 
       {renderStepper()}
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
-        
-        {/* 1: terminarz */}
+      <div className={styles.content}>
         {step === 1 && (
-          <div style={stepContainerStyle}>
-            <h2 style={stepTitleStyle}>Wybierz datę i liczbę gości</h2>
-            <div style={{ display: 'flex', gap: '40px', flexWrap: 'wrap' }}>
-              
-              {/* lewa strona - kalendarz */}
-              <div style={whiteCardStyle}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                  <button onClick={handlePrevMonth} style={navBtnStyle}>&lt;</button>
-                  <div style={{ fontWeight: 'bold', color: '#1E3A8A', fontSize: '16px' }}>
-                    {months[monthIndex]} {year}
-                  </div>
-                  <button onClick={handleNextMonth} style={navBtnStyle}>&gt;</button>
+          <section className={styles.panel}>
+            <h2 className={styles.stepTitle}>
+              Wybierz datę i liczbę gości
+            </h2>
+
+            <div className={styles.schedule}>
+              <div className={styles.card}>
+                <div className={styles.calendarHeader}>
+                  <button
+                    className={styles.monthButton}
+                    type="button"
+                    onClick={() => changeMonth(-1)}
+                    disabled={currentMonth <= minimumMonth}
+                    aria-label="Poprzedni miesiąc"
+                  >
+                    ‹
+                  </button>
+                  <span>
+                    {MONTHS[monthIndex]} {year}
+                  </span>
+                  <button
+                    className={styles.monthButton}
+                    type="button"
+                    onClick={() => changeMonth(1)}
+                    disabled={currentMonth >= maximumMonth}
+                    aria-label="Następny miesiąc"
+                  >
+                    ›
+                  </button>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
-                  {['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb', 'Nd'].map(d => <div key={d} style={{ fontWeight: 600, fontSize: '14px', paddingBottom: '10px', textAlign: 'center', color: '#1F2937' }}>{d}</div>)}
-                  
-                  {Array.from({ length: firstDayIndex }).map((_, i) => <div key={`empty-${i}`} />)}
-                  
-                  {Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
-                    const isPast = new Date(year, monthIndex, day) < new Date(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate());
-                    
+                <div className={styles.calendar}>
+                  {['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb', 'Nd'].map(
+                    (weekday) => (
+                      <div className={styles.weekday} key={weekday}>
+                        {weekday}
+                      </div>
+                    ),
+                  )}
+
+                  {Array.from({ length: firstDayIndex }).map((_, index) => (
+                    <div key={`empty-${index}`} />
+                  ))}
+
+                  {Array.from(
+                    { length: daysInMonth },
+                    (_, index) => index + 1,
+                  ).map((day) => {
+                    const dateKey = buildDateKey(year, monthIndex, day)
+                    const unavailable =
+                      dateKey < today || dateKey > maximumDate
+                    const selected = formData.selectedDay === day
+
                     return (
-                      <div 
-                        key={day} 
-                        onClick={() => { if (!isPast) setFormData(p => ({ ...p, selectedDay: day })); }} 
-                        style={{
-                          padding: '10px',
-                          background: formData.selectedDay === day ? '#1E3A8A' : 'transparent',
-                          color: isPast ? '#CBD5E1' : (formData.selectedDay === day ? 'white' : '#444651'),
-                          borderRadius: '4px', 
-                          cursor: isPast ? 'not-allowed' : 'pointer', 
-                          fontSize: '14px', 
-                          textAlign: 'center',
-                          fontWeight: formData.selectedDay === day ? 'bold' : 'normal',
-                          opacity: isPast ? 0.5 : 1
-                        }}
+                      <button
+                        className={`${styles.day} ${
+                          selected ? styles.daySelected : ''
+                        }`}
+                        key={day}
+                        type="button"
+                        disabled={unavailable}
+                        onClick={() => updateForm('selectedDay', day)}
+                        aria-label={`Wybierz ${day} ${
+                          MONTHS[monthIndex]
+                        } ${year}`}
+                        aria-pressed={selected}
                       >
                         {day}
-                      </div>
-                    );
+                      </button>
+                    )
                   })}
                 </div>
               </div>
 
-              {/* prawa strona - ukrywana */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div className={styles.choices}>
                 {formData.selectedDay ? (
                   <>
-                    {/* liczba gości */}
-                    <div style={whiteCardStyle}>
-                      <label style={miniLabelStyle}>Liczba gości</label>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                        <button style={btnCounterStyle} onClick={() => setFormData(p => ({ ...p, guests: Math.max(1, parseInt(p.guests) - 1).toString() }))}>-</button>
-                        <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#1F2937' }}>{formData.guests}</span>
-                        <button style={btnCounterStyle} onClick={() => setFormData(p => ({ ...p, guests: (parseInt(p.guests) + 1).toString() }))}>+</button>
+                    <div className={styles.card}>
+                      <span className={styles.miniLabel}>
+                        Liczba gości
+                      </span>
+                      <div className={styles.counter}>
+                        <button
+                          className={styles.counterButton}
+                          type="button"
+                          onClick={() => updateGuests(-1)}
+                          disabled={Number(formData.guests) <= 1}
+                          aria-label="Zmniejsz liczbę gości"
+                        >
+                          −
+                        </button>
+                        <span className={styles.counterValue}>
+                          {formData.guests}
+                        </span>
+                        <button
+                          className={styles.counterButton}
+                          type="button"
+                          onClick={() => updateGuests(1)}
+                          disabled={Number(formData.guests) >= 20}
+                          aria-label="Zwiększ liczbę gości"
+                        >
+                          +
+                        </button>
                       </div>
                     </div>
-                    
-                    {/* godziny przewijane */}
-                    <div style={whiteCardStyle}>
-                      <label style={miniLabelStyle}>Godzina</label>
-                      <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: 'repeat(3, 1fr)', 
-                        gap: '10px',
-                        maxHeight: '160px',       
-                        overflowY: 'auto',        
-                        paddingRight: '6px' 
-                      }}>
-                        {availableTimes.map(t => (
-                          <div key={t} onClick={() => setFormData(p => ({ ...p, selectedTime: t }))} style={{
-                            padding: '12px', borderRadius: '4px', cursor: 'pointer', textAlign: 'center', fontSize: '14px',
-                            border: formData.selectedTime === t ? '2px solid #1E3A8A' : '1px solid #E5E7EB',
-                            background: formData.selectedTime === t ? '#EEF2FF' : 'white',
-                            color: '#1E3A8A',
-                            fontWeight: formData.selectedTime === t ? 'bold' : 500
-                          }}>{t}</div>
-                        ))}
+
+                    <div className={styles.card}>
+                      <span className={styles.miniLabel}>Godzina</span>
+                      <div className={styles.times}>
+                        {AVAILABLE_TIMES.map((time) => {
+                          const selected =
+                            formData.selectedTime === time
+
+                          return (
+                            <button
+                              className={`${styles.timeButton} ${
+                                selected ? styles.timeSelected : ''
+                              }`}
+                              key={time}
+                              type="button"
+                              onClick={() =>
+                                updateForm('selectedTime', time)
+                              }
+                              aria-pressed={selected}
+                            >
+                              {time}
+                            </button>
+                          )
+                        })}
                       </div>
                     </div>
                   </>
                 ) : (
-                  <div style={{ ...whiteCardStyle, display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#7B5804', fontStyle: 'italic', textAlign: 'center', padding: '40px', border: '1px dashed #D4A853', background: '#FFFDF9' }}>
-                    Wybierz najpierw dzień w kalendarzu, aby wyświetlić wybór liczby gości oraz godzinę.
+                  <div className={styles.hint}>
+                    Wybierz dzień w kalendarzu, aby ustawić godzinę i
+                    liczbę gości.
                   </div>
                 )}
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '32px' }}>
-              <button 
-                style={{ ...primaryBtnStyle, opacity: formData.selectedDay ? 1 : 0.5 }} 
-                disabled={!formData.selectedDay} 
+            <div className={styles.actions}>
+              <span />
+              <button
+                className={styles.primaryButton}
+                type="button"
+                disabled={!formData.selectedDay}
                 onClick={() => goToStep(2)}
               >
-                DALEJ: WYBIERZ SALĘ →
+                Dalej: wybierz salę
               </button>
             </div>
-          </div>
+          </section>
         )}
 
-        {/* 2: wybór sali */}
         {step === 2 && (
-          <div style={stepContainerStyle}>
-            <h2 style={stepTitleStyle}>Wybierz salę</h2>
-            <p style={{ color: '#444651', marginTop: '-15px', marginBottom: '30px', fontSize: '15px' }}>Wybierz jedną z naszych trzech unikalnych stref, każda z niepowtarzalnym klimatem.</p>
-            
-            <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-              {[
-                { id: 'Sala Główna', placeholderText: 'Interior', desc: 'Przeszklona sala z eleganckim wykończeniem. Idealna na kolacje i spotkania rodzinne.' },
-                { id: 'Sala VIP', placeholderText: 'VIP', desc: 'Kameralna przestrzeń z ekskluzywnym wystrojem. Wyposażona w sprzęt AV.' },
-                { id: 'Ogródek Letni', placeholderText: 'Garden', desc: 'Ciągnąca się na zewnątrz strefa z widokiem na ogród. Doskonała na ciepłe wieczory.' }
-              ].map(hall => {
-                const isSelected = formData.selectedHall === hall.id;
-                return (
-                  <div key={hall.id} style={{
-                    flex: 1, minWidth: '300px', background: 'white', borderRadius: '12px', overflow: 'hidden',
-                    border: isSelected ? '2px solid #1E3A8A' : '1px solid #D4A853',
-                    display: 'flex', flexDirection: 'column', boxSizing: 'border-box', padding: '16px'
-                  }}>
-                    <div style={{
-                      width: '100%', height: '200px', background: '#FAF7F2', borderRadius: '8px',
-                      display: 'flex', justifyContent: 'center', alignItems: 'center',
-                      color: '#D4A853', fontFamily: "'Inter', sans-serif", fontSize: '18px', fontWeight: 500
-                    }}>
-                      {hall.placeholderText}
-                    </div>
+          <section className={styles.panel}>
+            <h2 className={styles.stepTitle}>Wybierz salę</h2>
+            <p className={styles.stepIntro}>
+              Wybierz jedną z trzech stref restauracji.
+            </p>
 
-                    <div style={{ padding: '20px 4px 4px 4px', display: 'flex', flexDirection: 'column', gap: '12px', flexGrow: 1 }}>
-                      <h3 style={{ margin: 0, color: '#1E3A8A', fontFamily: "'Noto Serif', serif", fontSize: '22px', fontWeight: 600 }}>{hall.id}</h3>
-                      <p style={{ margin: 0, color: '#444651', fontSize: '14px', lineHeight: '22px' }}>{hall.desc}</p>
-                      
-                      <button 
-                        type="button"
-                        onClick={() => setFormData(p => ({ ...p, selectedHall: hall.id }))}
-                        style={{
-                          marginTop: 'auto', padding: '14px', borderRadius: '4px', cursor: 'pointer', fontWeight: 600,
-                          fontSize: '14px', fontFamily: "'Inter', sans-serif", width: '100%',
-                          background: isSelected ? '#1E3A8A' : '#FAF7F2',
-                          color: isSelected ? 'white' : '#7B5804',
-                          border: isSelected ? '1px solid #1E3A8A' : '1px solid rgba(212, 168, 83, 0.3)'
-                        }}
-                      >
-                        {isSelected ? 'WYBRANO SALĘ' : 'Wybierz tę salę'}
-                      </button>
+            <div className={styles.halls}>
+              {HALLS.map((hall) => {
+                const selected = formData.selectedHall === hall.id
+
+                return (
+                  <article
+                    className={`${styles.hall} ${
+                      selected ? styles.hallSelected : ''
+                    }`}
+                    key={hall.id}
+                  >
+                    <div className={styles.hallImage}>
+                      {hall.placeholder}
                     </div>
-                  </div>
-                );
+                    <h3 className={styles.hallTitle}>{hall.label}</h3>
+                    <p className={styles.hallDescription}>
+                      {hall.description}
+                    </p>
+                    <button
+                      className={styles.hallButton}
+                      type="button"
+                      onClick={() =>
+                        updateForm('selectedHall', hall.id)
+                      }
+                      aria-pressed={selected}
+                    >
+                      {selected
+                        ? `Wybrano: ${hall.label}`
+                        : `Wybierz: ${hall.label}`}
+                    </button>
+                  </article>
+                )
               })}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '32px' }}>
-              <button type="button" onClick={() => goToStep(1)} style={{ ...primaryBtnStyle, background: '#64748B' }}>WSTECZ</button>
-              <button 
-                style={{ ...primaryBtnStyle, opacity: formData.selectedHall ? 1 : 0.5 }} 
-                disabled={!formData.selectedHall} 
+            <div className={styles.actions}>
+              <button
+                className={styles.secondaryButton}
+                type="button"
+                onClick={() => goToStep(1)}
+              >
+                Wstecz
+              </button>
+              <button
+                className={styles.primaryButton}
+                type="button"
+                disabled={!formData.selectedHall}
                 onClick={() => goToStep(3)}
               >
-                DALEJ: TWOJE DANE →
+                Dalej: twoje dane
               </button>
             </div>
-          </div>
+          </section>
         )}
 
-        {/* 3: dane */}
         {step === 3 && (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '32px', maxWidth: '900px', margin: '0 auto' }}>
-            <h2 style={stepTitleStyle}>Twoje dane</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-              <div style={formGroupStyle}><label style={labelStyle}>Imię i nazwisko</label><input type="text" name="name" value={formData.name} onChange={handleInputChange} style={inputStyle} required /></div>
-              <div style={formGroupStyle}><label style={labelStyle}>Telefon</label><input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} style={inputStyle} required /></div>
-              <div style={formGroupStyle}><label style={labelStyle}>E-mail</label><input type="email" name="email" value={formData.email} onChange={handleInputChange} style={inputStyle} required /></div>
-              <div style={formGroupStyle}><label style={labelStyle}>Liczba osób</label><input type="number" name="guests" value={formData.guests} onChange={handleInputChange} style={inputStyle} required /></div>
+          <form className={styles.form} onSubmit={handleSubmit}>
+            <h2 className={styles.stepTitle}>Twoje dane</h2>
+
+            <div className={styles.formGrid}>
+              <label className={styles.field}>
+                <span className={styles.label}>Imię i nazwisko</span>
+                <input
+                  className={styles.input}
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={(event) =>
+                    updateForm(event.target.name, event.target.value)
+                  }
+                  minLength={2}
+                  maxLength={100}
+                  disabled={formLocked}
+                  required
+                />
+              </label>
+
+              <label className={styles.field}>
+                <span className={styles.label}>Telefon</span>
+                <input
+                  className={styles.input}
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={(event) =>
+                    updateForm(event.target.name, event.target.value)
+                  }
+                  minLength={7}
+                  maxLength={20}
+                  disabled={formLocked}
+                  required
+                />
+              </label>
+
+              <label className={styles.field}>
+                <span className={styles.label}>E-mail</span>
+                <input
+                  className={styles.input}
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={(event) =>
+                    updateForm(event.target.name, event.target.value)
+                  }
+                  minLength={5}
+                  maxLength={254}
+                  disabled={formLocked}
+                  required
+                />
+              </label>
+
+              <label className={styles.field}>
+                <span className={styles.label}>Liczba osób</span>
+                <input
+                  className={styles.input}
+                  type="number"
+                  name="guests"
+                  value={formData.guests}
+                  onChange={(event) =>
+                    updateForm(event.target.name, event.target.value)
+                  }
+                  min="1"
+                  max="20"
+                  disabled={formLocked}
+                  required
+                />
+              </label>
             </div>
-            <div style={formGroupStyle}><label style={labelStyle}>Uwagi (opcjonalnie)</label><textarea name="notes" value={formData.notes} onChange={handleInputChange} style={{ ...inputStyle, height: '120px', resize: 'vertical' }} /></div>
-            <div style={{ display: 'flex', gap: '16px' }}>
-              <button type="button" onClick={() => goToStep(2)} style={{ ...primaryBtnStyle, background: '#64748B' }}>WSTECZ</button>
-              <button type="submit" style={primaryBtnStyle}>ZAREZERWUJ STOLIK</button>
+
+            <label className={styles.field}>
+              <span className={styles.label}>Uwagi (opcjonalnie)</span>
+              <textarea
+                className={`${styles.input} ${styles.textarea}`}
+                name="notes"
+                value={formData.notes}
+                onChange={(event) =>
+                  updateForm(event.target.name, event.target.value)
+                }
+                maxLength={500}
+                disabled={formLocked}
+              />
+            </label>
+
+            {submissionError && (
+              <div className={styles.retry}>
+                <p className={styles.error} role="alert">
+                  {submissionError}
+                </p>
+              </div>
+            )}
+
+            <div className={styles.actions}>
+              <button
+                className={styles.secondaryButton}
+                type="button"
+                onClick={() => goToStep(2)}
+                disabled={formLocked}
+              >
+                Wstecz
+              </button>
+              <button
+                className={styles.primaryButton}
+                type="submit"
+                disabled={submissionStatus === 'submitting'}
+              >
+                {submissionStatus === 'submitting'
+                  ? 'Zapisywanie…'
+                  : retryable
+                    ? 'Ponów zapis'
+                    : 'Zarezerwuj stolik'}
+              </button>
             </div>
           </form>
         )}
 
-        {/* 4: potwierdzenie */}
-        {step === 4 && (
-          <div style={confirmationCardStyle}>
-            <div style={{ width: '80px', height: '80px', background: '#16A34A', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', fontSize: '40px', marginBottom: '10px' }}>✓</div>
-            <h2 style={{ color: '#16A34A', fontSize: '32px', fontFamily: "'Noto Serif', serif", margin: 0 }}>Rezerwacja potwierdzona!</h2>
-            <p style={{ color: '#64748B', margin: 0, fontSize: '16px' }}>Wysłaliśmy potwierdzenie na Twój e-mail: <strong>{formData.email}</strong></p>
-            <div style={summaryBoxStyle}>
-              Data: {formData.selectedDay} {months[monthIndex]} {year} | Godzina: {formData.selectedTime} | Osób: {formData.guests} | Sala: {formData.selectedHall}
+        {step === 4 && savedReservation && (
+          <section className={styles.confirmation}>
+            <div className={styles.check} aria-hidden="true">
+              ✓
             </div>
-            <button style={primaryBtnStyle} onClick={() => navigate('/')}>POWRÓT DO STRONY GŁÓWNEJ</button>
-          </div>
+            <h2 className={styles.confirmationTitle}>
+              Rezerwacja została zapisana
+            </h2>
+            <p className={styles.confirmationText}>
+              Dziękujemy. Restauracja otrzymała dane rezerwacji.
+            </p>
+            <div className={styles.summary}>
+              Data: {savedReservation.serviceDate} | Godzina:{' '}
+              {savedReservation.time} | Osób: {savedReservation.guests}
+              {' | '}
+              Sala: {savedReservation.hall}
+            </div>
+            <button
+              className={styles.primaryButton}
+              type="button"
+              onClick={() => navigate('/')}
+            >
+              Powrót do strony głównej
+            </button>
+          </section>
         )}
-
       </div>
     </div>
-  );
+  )
 }
 
-const stepContainerStyle = { background: '#FAF7F2', padding: '40px', borderRadius: '8px', border: '1px solid rgba(212, 168, 83, 0.20)', fontFamily: "'Inter', sans-serif" };
-const stepTitleStyle = { margin: '0 0 24px 0', color: '#1E3A8A', fontSize: '28px', fontFamily: "'Noto Serif', serif", fontWeight: 600 };
-const whiteCardStyle = { flex: 1, background: 'white', padding: '24px', borderRadius: '4px', border: '1px solid #E5E7EB', boxSizing: 'border-box' };
-const miniLabelStyle = { display: 'block', color: '#64748B', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.5px' };
-const btnCounterStyle = { width: '36px', height: '36px', background: 'white', border: '1px solid #E5E7EB', borderRadius: '4px', cursor: 'pointer', fontSize: '18px', color: '#1E3A8A' };
-const primaryBtnStyle = { padding: '16px 32px', background: '#1E3A8A', color: 'white', border: 'none', borderRadius: '2px', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', cursor: 'pointer', letterSpacing: '0.5px' };
-const navBtnStyle = { background: 'none', border: 'none', color: '#1E3A8A', fontSize: '18px', fontWeight: 'bold', cursor: 'pointer', padding: '0 10px' };
-const formGroupStyle = { display: 'flex', flexDirection: 'column', gap: '8px' };
-const labelStyle = { color: '#444651', fontSize: '14px', fontWeight: 500 };
-const inputStyle = { width: '100%', padding: '14px', background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '4px', fontSize: '15px', boxSizing: 'border-box', outline: 'none', color: '#1F2937' };
-const confirmationCardStyle = { maxWidth: '800px', margin: '40px auto', border: '2px solid #16A34A', borderRadius: '16px', padding: '60px 40px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' };
-const summaryBoxStyle = { background: '#F0FDF4', width: '100%', padding: '24px', borderRadius: '8px', color: '#16A34A', fontWeight: 'bold', fontSize: '16px', border: '1px solid #16A34A' };
-
-export default Reservations;
+export default Reservations
