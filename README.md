@@ -53,3 +53,7 @@ Aplikacja nie ma funkcji rejestracji ani nadawania uprawnień.
 Projekt jest demonstracją. Publicznego formularza nie należy łączyć z realnymi
 danymi klientów bez App Check/reCAPTCHA lub backendowego limitowania żądań,
 monitoringu kosztów i ustalonej retencji danych.
+
+### Raport Google Analytics w czasie rzeczywistym na zdeployowanej aplikacji na vercelu:
+![Panel Real-time Google Analytics](./googleanalytics.png)
+![Panel Real-time Google Analytics](./googleanalytics2.png)
