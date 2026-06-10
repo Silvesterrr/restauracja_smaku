@@ -2,29 +2,6 @@
   width: 100%;
   background: var(--color-bg);
   border-bottom: 1px solid var(--color-gold-border);
-<<<<<<< HEAD
-}
-
-.inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 24px;
-  max-width: var(--container-max);
-  margin: 0 auto;
-  padding: 20px 24px;
-}
-
-.brand {
-  flex: 0 0 auto;
-  color: var(--color-navy);
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 32px;
-  letter-spacing: 0.02em;
-  text-decoration: none;
-  text-transform: uppercase;
-=======
   box-sizing: border-box;
 }
 
@@ -35,6 +12,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 24px;
 }
 
 .brandLink {
@@ -49,110 +27,11 @@
   text-transform: uppercase;
   line-height: 32px;
   letter-spacing: 0.35px;
->>>>>>> main
 }
 
 .links {
   display: flex;
   align-items: center;
-<<<<<<< HEAD
-  gap: 24px;
-}
-
-.link {
-  padding-bottom: 4px;
-  color: var(--color-text-nav);
-  border-bottom: 2px solid transparent;
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.03em;
-  line-height: 20px;
-  text-decoration: none;
-  text-transform: uppercase;
-  transition: color 0.2s ease, border-color 0.2s ease;
-}
-
-.link:hover,
-.linkActive {
-  color: var(--color-navy);
-  border-bottom-color: var(--color-gold);
-}
-
-.linkActive {
-  font-weight: 600;
-}
-
-.actions {
-  display: flex;
-  flex: 0 0 auto;
-  gap: 8px;
-}
-
-.reservationButton,
-.logoutButton {
-  padding: 12px 18px;
-  border-radius: var(--radius-sm);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  line-height: 15px;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
-.reservationButton {
-  color: var(--color-white);
-  background: var(--color-navy);
-  border: 1px solid var(--color-navy);
-}
-
-.logoutButton {
-  color: var(--color-navy);
-  background: transparent;
-  border: 1px solid var(--color-navy);
-}
-
-.reservationButton:focus-visible,
-.logoutButton:focus-visible,
-.link:focus-visible,
-.brand:focus-visible {
-  outline: 3px solid var(--color-focus-navy);
-  outline-offset: 3px;
-}
-
-@media (max-width: 1050px) {
-  .inner {
-    flex-wrap: wrap;
-  }
-
-  .links {
-    order: 3;
-    width: 100%;
-    padding-top: 4px;
-    overflow-x: auto;
-  }
-}
-
-@media (max-width: 600px) {
-  .inner {
-    padding: 16px;
-  }
-
-  .brand {
-    font-size: 20px;
-  }
-
-  .actions {
-    width: 100%;
-  }
-
-  .reservationButton,
-  .logoutButton {
-    flex: 1;
-  }
-}
-=======
   gap: 32px;
 }
 
@@ -165,22 +44,27 @@
   text-transform: uppercase;
   line-height: 20px;
   letter-spacing: 0.35px;
-  transition: color 0.2s ease;
+  transition: color 0.2s ease, border-color 0.2s ease;
   padding-bottom: 4px;
   border-bottom: 2px solid transparent;
 }
 
+.link:hover,
 .linkActive {
   color: var(--color-navy);
-  font-weight: 600;
   border-bottom-color: var(--color-gold);
 }
 
+.linkActive {
+  font-weight: 600;
+}
+
+/* Nowy, ładniejszy styl przycisku z main */
 .cta {
   padding: 12px 24px;
   background: var(--color-navy);
   border-radius: var(--radius-sm);
-  border: none;
+  border: 1px solid var(--color-navy);
   color: #ffffff;
   font-size: 15px;
   font-family: var(--font-sans);
@@ -189,5 +73,55 @@
   line-height: 15px;
   letter-spacing: 0.75px;
   cursor: pointer;
+  transition: opacity 0.2s ease;
 }
->>>>>>> main
+
+.cta:hover {
+  opacity: 0.9;
+}
+
+/* Przywrócony przycisk wylogowania, dopasowany do nowego stylu .cta */
+.logoutButton {
+  padding: 12px 24px;
+  background: #DC2626; /* Czerwony kolor */
+  border-radius: var(--radius-sm);
+  border: 1px solid #DC2626;
+  color: #ffffff;
+  font-size: 15px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  text-transform: uppercase;
+  line-height: 15px;
+  letter-spacing: 0.75px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.logoutButton:hover {
+  opacity: 0.9;
+}
+
+/* Przywrócona responsywność dla urządzeń mobilnych */
+@media (max-width: 1050px) {
+  .inner {
+    flex-wrap: wrap;
+  }
+
+  .links {
+    order: 3;
+    width: 100%;
+    padding-top: 12px;
+    overflow-x: auto;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .inner {
+    padding: 16px;
+  }
+
+  .brand {
+    font-size: 20px;
+  }
+}
