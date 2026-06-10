@@ -1,76 +1,75 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '../auth/useAuth'
-import styles from './Navbar.module.css'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/useAuth';
+import styles from './Navbar.module.css';
 
-const NAVIGATION = [
-  { path: '/menu', label: 'Menu' },
-  { path: '/o-nas', label: 'O nas' },
-  { path: '/rezerwacje', label: 'Rezerwacje' },
-  { path: '/kontakt', label: 'Kontakt' },
-  { path: '/galeria', label: 'Galeria' },
-  { path: '/okazje', label: 'Okazje' },
-]
+const NAV_LINKS = [
+  { to: '/menu', label: 'MENU' },
+  { to: '/o-nas', label: 'O NAS' },
+  { to: '/rezerwacje', label: 'REZERWACJE' },
+  { to: '/kontakt', label: 'KONTAKT' },
+  { to: '/galeria', label: 'GALERIA' },
+  { to: '/okazje', label: 'OKAZJE' },
+];
 
 function Navbar() {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { isStaff, logout } = useAuth()
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isStaff, logout } = useAuth();
 
   const handleLogout = async () => {
-    await logout()
-    navigate('/')
-  }
-
-  const linkClassName = (path) =>
-    `${styles.link} ${
-      location.pathname === path ? styles.linkActive : ''
-    }`
+    await logout();
+    navigate('/');
+  };
 
   return (
     <nav className={styles.nav} aria-label="Główna nawigacja">
       <div className={styles.inner}>
-        <Link className={styles.brand} to="/">
-          Restauracja Smak
+        <Link to="/" className={styles.brandLink}>
+          <span className={styles.brand}>RESTAURACJA SMAK</span>
         </Link>
 
         <div className={styles.links}>
-          {NAVIGATION.map((item) => (
-            <Link
-              className={linkClassName(item.path)}
-              key={item.path}
-              to={item.path}
+          {NAV_LINKS.map((l) => (
+            <NavLink
+              key={l.to}
+              to={l.to}
+              className={({ isActive }) => `${styles.link} ${isActive ? styles.linkActive : ''}`}
             >
-              {item.label}
-            </Link>
+              {l.label}
+            </NavLink>
           ))}
+          
+          {/* Panel Admina widoczny tylko dla zalogowanej obsługi */}
           {isStaff && (
-            <Link className={linkClassName('/admin')} to="/admin">
-              Panel
-            </Link>
+            <NavLink 
+              to="/admin" 
+              className={({ isActive }) => `${styles.link} ${isActive ? styles.linkActive : ''}`}
+            >
+              PANEL
+            </NavLink>
           )}
         </div>
 
-        <div className={styles.actions}>
-          <button
-            className={styles.reservationButton}
-            type="button"
-            onClick={() => navigate('/rezerwacje')}
-          >
-            Zarezerwuj stolik
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <button className={styles.cta} type="button" onClick={() => navigate('/rezerwacje')}>
+            ZAREZERWUJ STOLIK
           </button>
+          
+          {/* Przycisk wylogowania widoczny tylko dla zalogowanych */}
           {isStaff && (
             <button
-              className={styles.logoutButton}
+              className={styles.logoutButton || styles.cta} // Zabezpieczenie na wypadek braku klasy w module
               type="button"
               onClick={handleLogout}
+              style={{ background: '#DC2626', borderColor: '#DC2626' }} // Czerwony kolor dla wylogowania
             >
-              Wyloguj
+              WYLOGUJ
             </button>
           )}
         </div>
       </div>
     </nav>
-  )
+  );
 }
 
-export default Navbar
+export default Navbar;

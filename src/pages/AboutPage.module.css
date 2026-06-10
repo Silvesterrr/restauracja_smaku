@@ -1,0 +1,507 @@
+.page {
+  width: 100%;
+  position: relative;
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+.container {
+  width: 100%;
+  max-width: 1278px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* ===== O Nas ===== */
+.aboutSection {
+  width: 100%;
+  max-width: 1152px;
+  padding: 80px 24px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 48px;
+  flex-wrap: wrap;
+  box-sizing: border-box;
+}
+
+.aboutText {
+  flex: 1 1 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 22.7px;
+}
+
+.aboutHeading {
+  display: flex;
+  flex-direction: column;
+}
+
+.headingGold {
+  color: var(--color-gold);
+  font-size: 36px;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 46.8px;
+  word-wrap: break-word;
+}
+
+.headingNavy {
+  color: var(--color-navy);
+  font-size: 36px;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 46.8px;
+  word-wrap: break-word;
+}
+
+.paragraph {
+  color: var(--color-text);
+  font-size: 18px;
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 28.8px;
+  word-wrap: break-word;
+}
+
+.aboutImageWrap {
+  flex: 1 1 450px;
+  height: 500px;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  outline: 1px solid var(--color-gold-light);
+  outline-offset: -1px;
+}
+
+.coverImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ===== Szef Kuchni ===== */
+.chefSection {
+  width: 100%;
+  padding: 80px 63px;
+  background: var(--color-bg-alt-2);
+  border-top: 1px solid var(--color-gold-border);
+  border-bottom: 1px solid var(--color-gold-border);
+  display: flex;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.chefInner {
+  width: 100%;
+  max-width: 1152px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 48px;
+  flex-wrap: wrap;
+}
+
+.chefImageCol {
+  flex: 1 1 400px;
+  display: flex;
+  justify-content: center;
+}
+
+.chefImageCard {
+  width: 100%;
+  max-width: 448px;
+  height: 600px;
+  padding: 8px;
+  background: var(--color-bg);
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  outline: 1px solid var(--color-gold-light);
+  outline-offset: -1px;
+  box-sizing: border-box;
+}
+
+.chefText {
+  flex: 1 1 500px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chefTitle {
+  color: var(--color-navy);
+  font-size: 36px;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 46.8px;
+  word-wrap: break-word;
+}
+
+.chefName {
+  color: var(--color-gold-dark);
+  font-size: 28px;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 39.2px;
+  word-wrap: break-word;
+}
+
+.chefBio {
+  color: var(--color-text);
+  font-size: 18px;
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 28.8px;
+  word-wrap: break-word;
+}
+
+.chefQuote {
+  color: var(--color-text);
+  font-size: 16px;
+  font-family: var(--font-sans);
+  font-style: italic;
+  font-weight: 400;
+  line-height: 25.6px;
+  word-wrap: break-word;
+}
+
+/* ===== Galeria ===== */
+.gallerySection {
+  width: 100%;
+  max-width: 1200px;
+  padding: 79px 24px 80px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  box-sizing: border-box;
+}
+
+.sectionHead {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  text-align: center;
+}
+
+.sectionSubtitle {
+  color: var(--color-text);
+  font-size: 18px;
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 28.8px;
+  word-wrap: break-word;
+}
+
+.galleryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
+.galleryTile {
+  width: 100%;
+  height: 366px;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  outline: 1px solid var(--color-border);
+  outline-offset: -1px;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.galleryTile:hover {
+  transform: scale(1.02);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+
+.galleryImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ===== Kontakt ===== */
+.contactSection {
+  width: 100%;
+  padding: 79px 39px 80px 39px;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-gold-border);
+  border-bottom: 1px solid var(--color-gold-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.contactInner {
+  width: 100%;
+  max-width: 1200px;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  box-sizing: border-box;
+}
+
+.contactRow {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.contactCol {
+  flex: 1 1 450px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.infoCard {
+  padding: 32px;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  outline: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  box-sizing: border-box;
+}
+
+.infoItem {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.iconSquare {
+  background: var(--color-gold);
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.iconAddr {
+  width: 16px;
+  height: 20px;
+}
+
+.iconPhone {
+  width: 18px;
+  height: 18px;
+}
+
+.iconEmail {
+  width: 20px;
+  height: 16px;
+}
+
+.infoLabel {
+  color: var(--color-navy);
+  font-size: 20px;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 28px;
+  word-wrap: break-word;
+}
+
+.infoValue {
+  color: var(--color-text);
+  font-size: 16px;
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 25.6px;
+  word-wrap: break-word;
+  margin-top: 4px;
+}
+
+.hoursCard {
+  padding: 32px;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  outline: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+.hoursHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.iconClock {
+  width: 20px;
+  height: 20px;
+  background: var(--color-gold);
+}
+
+.hoursList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hoursRow {
+  display: flex;
+  justify-content: space-between;
+  color: var(--color-text);
+  font-size: 16px;
+  font-family: var(--font-sans);
+}
+
+.hoursRowBordered {
+  border-bottom: 1px solid rgba(212, 168, 83, 0.1);
+  padding-bottom: 6px;
+}
+
+.contactForm {
+  padding: 31px 32px 32px 32px;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  outline: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  box-sizing: border-box;
+}
+
+.formTitle {
+  color: var(--color-navy);
+  font-size: 28px;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 39.2px;
+  word-wrap: break-word;
+  margin-bottom: 5px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  color: var(--color-text);
+  font-size: 14px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  line-height: 16.8px;
+  letter-spacing: 0.7px;
+}
+
+.input {
+  width: 100%;
+  padding: 14px 12px;
+  background: #ffffff;
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-sm);
+  color: var(--color-placeholder);
+  font-size: 16px;
+  font-family: var(--font-sans);
+  font-weight: 400;
+  box-sizing: border-box;
+}
+
+.textarea {
+  padding: 11px 12px;
+  line-height: 25.6px;
+  resize: none;
+}
+
+.successMsg {
+  width: 100%;
+  padding: 12px;
+  background: #e6f4ea;
+  border: 1px solid var(--color-success-dark);
+  border-radius: var(--radius-sm);
+  color: var(--color-success-dark);
+  font-size: 14px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 13px 32px 12px 32px;
+  background: var(--color-navy);
+  border-radius: var(--radius-sm);
+  border: none;
+  color: #ffffff;
+  font-size: 15px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  line-height: 15px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mapWrap {
+  width: 100%;
+  height: 320px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  outline: 1px solid var(--color-border);
+}
+
+.mapWrap iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* ===== Lightbox ===== */
+.lightbox {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  cursor: zoom-out;
+}
+
+.lightboxInner {
+  position: relative;
+  max-width: 90%;
+  max-height: 85%;
+}
+
+.lightboxImg {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.lightboxClose {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 32px;
+  cursor: pointer;
+}
