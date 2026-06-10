@@ -5,6 +5,10 @@
   --color-gold: #D4A853;
   --color-gold-dark: #7B5804;
   --color-gold-light: #FFDEA6;
+  --color-white: #FFFFFF;
+  --color-navy-tint: #EEF2FF;
+  --color-gold-surface: #FFFDF9;
+  --color-gold-surface-strong: #FFFAF0;
 
   /* Tekst */
   --color-text: #444651;
@@ -15,6 +19,8 @@
   --color-text-soft: #757682;
   --color-placeholder: #6b7280;
   --color-img-placeholder: #eeedf4;
+  --color-text-disabled: #9CA3AF;
+  --color-text-unavailable: #CBD5E1;
 
   /* Tła */
   --color-bg: #FAF7F2;
@@ -27,11 +33,21 @@
   --color-border-soft: #E5E7EB;
   --color-border-input: #C5C5D3;
   --color-gold-border: rgba(212, 168, 83, 0.20);
+  --color-gold-border-medium: rgba(212, 168, 83, 0.35);
+  --color-gold-border-strong: rgba(212, 168, 83, 0.45);
+  --color-focus-navy: rgba(30, 58, 138, 0.12);
+  --color-shadow-navy: rgba(30, 58, 138, 0.08);
+  --color-white-overlay: rgba(255, 255, 255, 0.20);
 
   /* Stan sukcesu (formularze) */
   --color-success: #16A34A;
   --color-success-dark: #137333;
   --color-success-bg: #F0FDF4;
+
+  /* Stan błędu */
+  --color-error: #991B1B;
+  --color-error-bg: #FEF2F2;
+  --color-error-border: #FECACA;
 
   /* Typografia */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;

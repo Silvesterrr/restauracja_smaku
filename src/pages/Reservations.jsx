@@ -1,66 +1,127 @@
-import React, { useState } from 'react';
+import React, { Fragment, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { submitReservation } from '../services/reservations';
+import {
+  addDaysToDateKey,
+  buildDateKey,
+  dateKeyParts,
+  getWarsawDateKey,
+  monthKey,
+} from '../utils/date';
+import {
+  AVAILABLE_TIMES,
+  buildReservationFields,
+  HALLS,
+  validateReservationFields,
+} from '../utils/reservationForm';
 import styles from './Reservations.module.css';
 
-function Reservations() {
+const MONTHS = [
+  'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec',
+  'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień',
+];
+
+const INITIAL_FORM_DATA = {
+  selectedDay: null,
+  selectedTime: '19:00',
+  guests: '2',
+  selectedHall: '',
+  name: '',
+  phone: '',
+  email: '',
+  notes: '',
+};
+
+export default function Reservations() {
   const navigate = useNavigate();
+  const [today] = useState(() => getWarsawDateKey());
+  const [maximumDate] = useState(() => addDaysToDateKey(today, 180));
+  const initialDate = useMemo(() => dateKeyParts(today), [today]);
+  const [currentDate, setCurrentDate] = useState(
+    () => new Date(initialDate.year, initialDate.monthIndex, 1),
+  );
   const [step, setStep] = useState(1);
-
-  const todayDate = new Date();
-  const [currentDate, setCurrentDate] = useState(new Date());
-
-  const [formData, setFormData] = useState({
-    selectedDay: null,
-    selectedTime: '19:00',
-    guests: '2',
-    selectedHall: '',
-    name: '',
-    phone: '',
-    email: '',
-    notes: '',
-  });
-
-  const months = [
-    'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec',
-    'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień',
-  ];
+  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
+  const [submissionStatus, setSubmissionStatus] = useState('idle');
+  const [submissionError, setSubmissionError] = useState('');
+  const [retryable, setRetryable] = useState(false);
+  const [savedReservation, setSavedReservation] = useState(null);
 
   const year = currentDate.getFullYear();
   const monthIndex = currentDate.getMonth();
-
   const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-  let firstDayIndex = new Date(year, monthIndex, 1).getDay() - 1;
-  if (firstDayIndex === -1) firstDayIndex = 6;
-
-  const availableTimes = [
-    '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
-    '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
-    '18:00', '18:30', '19:00', '19:30', '20:00',
-  ];
-
-  const handlePrevMonth = () => {
-    setFormData((p) => ({ ...p, selectedDay: null }));
-    setCurrentDate(new Date(year, monthIndex - 1, 1));
-  };
-
-  const handleNextMonth = () => {
-    setFormData((p) => ({ ...p, selectedDay: null }));
-    setCurrentDate(new Date(year, monthIndex + 1, 1));
-  };
+  const firstWeekday = new Date(year, monthIndex, 1).getDay();
+  const firstDayIndex = firstWeekday === 0 ? 6 : firstWeekday - 1;
+  
+  const currentMonth = monthKey(year, monthIndex);
+  const minimumMonth = today.slice(0, 7);
+  const maximumMonth = maximumDate.slice(0, 7);
+  const formLocked = submissionStatus === 'submitting' || retryable;
 
   const goToStep = (nextStep) => {
     setStep(nextStep);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const changeMonth = (direction) => {
+    const nextDate = new Date(year, monthIndex + direction, 1);
+    const nextMonth = monthKey(nextDate.getFullYear(), nextDate.getMonth());
+
+    if (nextMonth < minimumMonth || nextMonth > maximumMonth) {
+      return;
+    }
+
+    setFormData((previous) => ({
+      ...previous,
+      selectedDay: null,
+    }));
+    setCurrentDate(nextDate);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    goToStep(4);
+  const updateForm = (name, value) => {
+    setFormData((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+    setSubmissionError('');
+    setSubmissionStatus('idle');
+  };
+
+  const updateGuests = (difference) => {
+    const guests = Math.min(
+      20,
+      Math.max(1, Number(formData.guests) + difference),
+    );
+    updateForm('guests', String(guests));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const serviceDate = buildDateKey(year, monthIndex, formData.selectedDay);
+    const fields = buildReservationFields(formData, serviceDate);
+    const validationError = validateReservationFields(fields, today, maximumDate);
+
+    if (validationError) {
+      setSubmissionStatus('error');
+      setSubmissionError(validationError);
+      setRetryable(false);
+      return;
+    }
+
+    setSubmissionStatus('submitting');
+    setSubmissionError('');
+    setRetryable(false);
+
+    try {
+      const savedPayload = await submitReservation(fields);
+      setSavedReservation(savedPayload);
+      setSubmissionStatus('success');
+      goToStep(4);
+    } catch (error) {
+      setSubmissionStatus('error');
+      setSubmissionError(error.message || 'Nie udało się zapisać rezerwacji.');
+      setRetryable(Boolean(error.retryable));
+    }
   };
 
   const renderStepper = () => {
@@ -70,19 +131,21 @@ function Reservations() {
       { num: 3, label: 'Dane' },
       { num: 4, label: 'Potwierdzenie' },
     ];
-
     return (
-      <div className={styles.stepper}>
+      <div className={styles.stepper} aria-label="Etapy rezerwacji">
         {stepsInfo.map((s, index) => {
           const on = step >= s.num;
           return (
-            <React.Fragment key={s.num}>
-              <div className={`${styles.step} ${on ? styles.stepOn : styles.stepOff}`}>
+            <Fragment key={s.num}>
+              <div
+                className={`${styles.step} ${on ? styles.stepOn : styles.stepOff}`}
+                aria-current={step === s.num ? 'step' : undefined}
+              >
                 <span className={`${styles.stepNum} ${on ? styles.stepNumOn : ''}`}>{s.num}</span>
                 <span className={styles.stepLabel}>{s.label}</span>
               </div>
-              {index < stepsInfo.length - 1 && <div className={styles.stepConnector} />}
-            </React.Fragment>
+              {index < stepsInfo.length - 1 && <div className={styles.stepConnector} aria-hidden="true" />}
+            </Fragment>
           );
         })}
       </div>
@@ -104,17 +167,34 @@ function Reservations() {
       {renderStepper()}
 
       <div className={styles.inner}>
-        {/* 1: terminarz */}
+        {/* Krok 1: Terminarz */}
         {step === 1 && (
           <div className={styles.stepContainer}>
             <h2 className={styles.stepTitle}>Wybierz datę i liczbę gości</h2>
             <div className={styles.row40}>
-              {/* kalendarz */}
+              
+              {/* Kalendarz */}
               <div className={styles.whiteCard}>
                 <div className={styles.calHeader}>
-                  <button onClick={handlePrevMonth} className={styles.navBtn}>&lt;</button>
-                  <div className={styles.calMonth}>{months[monthIndex]} {year}</div>
-                  <button onClick={handleNextMonth} className={styles.navBtn}>&gt;</button>
+                  <button
+                    onClick={() => changeMonth(-1)}
+                    className={styles.navBtn}
+                    type="button"
+                    disabled={currentMonth <= minimumMonth}
+                    aria-label="Poprzedni miesiąc"
+                  >
+                    &lt;
+                  </button>
+                  <div className={styles.calMonth}>{MONTHS[monthIndex]} {year}</div>
+                  <button
+                    onClick={() => changeMonth(1)}
+                    className={styles.navBtn}
+                    type="button"
+                    disabled={currentMonth >= maximumMonth}
+                    aria-label="Następny miesiąc"
+                  >
+                    &gt;
+                  </button>
                 </div>
 
                 <div className={styles.calGrid}>
@@ -122,14 +202,16 @@ function Reservations() {
                     <div key={d} className={styles.calWeekday}>{d}</div>
                   ))}
 
-                  {Array.from({ length: firstDayIndex }).map((_, i) => <div key={`empty-${i}`} />)}
+                  {Array.from({ length: firstDayIndex }).map((_, i) => (
+                    <div key={`empty-${i}`} />
+                  ))}
 
                   {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
-                    const isPast =
-                      new Date(year, monthIndex, day) <
-                      new Date(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate());
+                    const dateKey = buildDateKey(year, monthIndex, day);
+                    const unavailable = dateKey < today || dateKey > maximumDate;
                     const selected = formData.selectedDay === day;
-                    const cls = isPast
+                    
+                    const cls = unavailable
                       ? styles.dayPast
                       : selected
                       ? styles.daySelected
@@ -138,8 +220,11 @@ function Reservations() {
                     return (
                       <div
                         key={day}
-                        onClick={() => { if (!isPast) setFormData((p) => ({ ...p, selectedDay: day })); }}
+                        onClick={() => { if (!unavailable) updateForm('selectedDay', day); }}
                         className={`${styles.dayCell} ${cls}`}
+                        role="button"
+                        aria-label={`Wybierz ${day} ${MONTHS[monthIndex]} ${year}`}
+                        aria-pressed={selected}
                       >
                         {day}
                       </div>
@@ -148,31 +233,50 @@ function Reservations() {
                 </div>
               </div>
 
-              {/* prawa strona */}
+              {/* Prawa kolumna (Liczba gości i godzina) */}
               <div className={styles.rightCol}>
                 {formData.selectedDay ? (
                   <>
                     <div className={styles.whiteCard}>
-                      <label className={styles.miniLabel}>Liczba gości</label>
+                      <span className={styles.miniLabel}>Liczba gości</span>
                       <div className={styles.guestRow}>
-                        <button className={styles.counterBtn} onClick={() => setFormData((p) => ({ ...p, guests: Math.max(1, parseInt(p.guests) - 1).toString() }))}>-</button>
+                        <button
+                          className={styles.counterBtn}
+                          type="button"
+                          onClick={() => updateGuests(-1)}
+                          disabled={Number(formData.guests) <= 1}
+                        >
+                          -
+                        </button>
                         <span className={styles.guestNum}>{formData.guests}</span>
-                        <button className={styles.counterBtn} onClick={() => setFormData((p) => ({ ...p, guests: (parseInt(p.guests) + 1).toString() }))}>+</button>
+                        <button
+                          className={styles.counterBtn}
+                          type="button"
+                          onClick={() => updateGuests(1)}
+                          disabled={Number(formData.guests) >= 20}
+                        >
+                          +
+                        </button>
                       </div>
                     </div>
 
                     <div className={styles.whiteCard}>
-                      <label className={styles.miniLabel}>Godzina</label>
+                      <span className={styles.miniLabel}>Godzina</span>
                       <div className={styles.timeGrid}>
-                        {availableTimes.map((t) => (
-                          <div
-                            key={t}
-                            onClick={() => setFormData((p) => ({ ...p, selectedTime: t }))}
-                            className={`${styles.timeSlot} ${formData.selectedTime === t ? styles.timeSlotSelected : ''}`}
-                          >
-                            {t}
-                          </div>
-                        ))}
+                        {AVAILABLE_TIMES.map((time) => {
+                          const selected = formData.selectedTime === time;
+                          return (
+                            <button
+                              key={time}
+                              type="button"
+                              onClick={() => updateForm('selectedTime', time)}
+                              className={`${styles.timeSlot} ${selected ? styles.timeSlotSelected : ''}`}
+                              aria-pressed={selected}
+                            >
+                              {time}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
                   </>
@@ -187,37 +291,34 @@ function Reservations() {
             <div className={styles.actionsEnd}>
               <button
                 className={`${styles.primaryBtn} ${formData.selectedDay ? '' : styles.dimmed}`}
+                type="button"
                 disabled={!formData.selectedDay}
                 onClick={() => goToStep(2)}
               >
-                DALEJ: WYBIERZ SALĘ →
+                Dalej: wybierz salę
               </button>
             </div>
           </div>
         )}
 
-        {/* 2: wybór sali */}
+        {/* Krok 2: Wybór Sali */}
         {step === 2 && (
           <div className={styles.stepContainer}>
             <h2 className={styles.stepTitle}>Wybierz salę</h2>
             <p className={styles.stepText}>Wybierz jedną z naszych trzech unikalnych stref, każda z niepowtarzalnym klimatem.</p>
 
             <div className={styles.hallRow}>
-              {[
-                { id: 'Sala Główna', placeholderText: 'Interior', desc: 'Przeszklona sala z eleganckim wykończeniem. Idealna na kolacje i spotkania rodzinne.' },
-                { id: 'Sala VIP', placeholderText: 'VIP', desc: 'Kameralna przestrzeń z ekskluzywnym wystrojem. Wyposażona w sprzęt AV.' },
-                { id: 'Ogródek Letni', placeholderText: 'Garden', desc: 'Ciągnąca się na zewnątrz strefa z widokiem na ogród. Doskonała na ciepłe wieczory.' },
-              ].map((hall) => {
+              {HALLS.map((hall) => {
                 const isSelected = formData.selectedHall === hall.id;
                 return (
                   <div key={hall.id} className={`${styles.hallCard} ${isSelected ? styles.hallCardSelected : ''}`}>
-                    <div className={styles.hallThumb}>{hall.placeholderText}</div>
+                    <div className={styles.hallThumb}>{hall.placeholder || 'Sala'}</div>
                     <div className={styles.hallBody}>
-                      <h3 className={styles.hallTitle}>{hall.id}</h3>
-                      <p className={styles.hallDesc}>{hall.desc}</p>
+                      <h3 className={styles.hallTitle}>{hall.label}</h3>
+                      <p className={styles.hallDesc}>{hall.description}</p>
                       <button
                         type="button"
-                        onClick={() => setFormData((p) => ({ ...p, selectedHall: hall.id }))}
+                        onClick={() => updateForm('selectedHall', hall.id)}
                         className={`${styles.hallBtn} ${isSelected ? styles.hallBtnSelected : ''}`}
                       >
                         {isSelected ? 'WYBRANO SALĘ' : 'Wybierz tę salę'}
@@ -232,48 +333,77 @@ function Reservations() {
               <button type="button" onClick={() => goToStep(1)} className={`${styles.primaryBtn} ${styles.backBtn}`}>WSTECZ</button>
               <button
                 className={`${styles.primaryBtn} ${formData.selectedHall ? '' : styles.dimmed}`}
+                type="button"
                 disabled={!formData.selectedHall}
                 onClick={() => goToStep(3)}
               >
-                DALEJ: TWOJE DANE →
+                Dalej: twoje dane
               </button>
             </div>
           </div>
         )}
 
-        {/* 3: dane */}
+        {/* Krok 3: Dane Osobowe */}
         {step === 3 && (
           <form onSubmit={handleSubmit} className={styles.dataForm}>
-            <h2 className={styles.stepTitle}>Twoje dane</h2>
-            <div className={styles.dataGrid}>
-              <div className={styles.formGroup}><label className={styles.label}>Imię i nazwisko</label><input type="text" name="name" value={formData.name} onChange={handleInputChange} className={styles.input} required /></div>
-              <div className={styles.formGroup}><label className={styles.label}>Telefon</label><input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} className={styles.input} required /></div>
-              <div className={styles.formGroup}><label className={styles.label}>E-mail</label><input type="email" name="email" value={formData.email} onChange={handleInputChange} className={styles.input} required /></div>
-              <div className={styles.formGroup}><label className={styles.label}>Liczba osób</label><input type="number" name="guests" value={formData.guests} onChange={handleInputChange} className={styles.input} required /></div>
-            </div>
-            <div className={styles.formGroup}><label className={styles.label}>Uwagi (opcjonalnie)</label><textarea name="notes" value={formData.notes} onChange={handleInputChange} className={`${styles.input} ${styles.textarea}`} /></div>
-            <div className={styles.actionsGap}>
-              <button type="button" onClick={() => goToStep(2)} className={`${styles.primaryBtn} ${styles.backBtn}`}>WSTECZ</button>
-              <button type="submit" className={styles.primaryBtn}>ZAREZERWUJ STOLIK</button>
+            <div className={styles.stepContainer}>
+              <h2 className={styles.stepTitle}>Twoje dane</h2>
+              <div className={styles.dataGrid}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Imię i nazwisko</label>
+                  <input type="text" name="name" value={formData.name} onChange={(e) => updateForm(e.target.name, e.target.value)} className={styles.input} disabled={formLocked} required />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Telefon</label>
+                  <input type="tel" name="phone" value={formData.phone} onChange={(e) => updateForm(e.target.name, e.target.value)} className={styles.input} disabled={formLocked} required />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>E-mail</label>
+                  <input type="email" name="email" value={formData.email} onChange={(e) => updateForm(e.target.name, e.target.value)} className={styles.input} disabled={formLocked} required />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>Liczba osób</label>
+                  <input type="number" name="guests" value={formData.guests} onChange={(e) => updateForm(e.target.name, e.target.value)} className={styles.input} min="1" max="20" disabled={formLocked} required />
+                </div>
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>Uwagi (opcjonalnie)</label>
+                <textarea name="notes" value={formData.notes} onChange={(e) => updateForm(e.target.name, e.target.value)} className={`${styles.input} ${styles.textarea}`} maxLength={500} disabled={formLocked} />
+              </div>
+
+              {submissionError && (
+                <div style={{ color: '#DC2626', marginBottom: '15px', fontWeight: '500' }} role="alert">
+                  {submissionError}
+                </div>
+              )}
+
+              <div className={styles.actionsGap}>
+                <button type="button" onClick={() => goToStep(2)} className={`${styles.primaryBtn} ${styles.backBtn}`} disabled={formLocked}>WSTECZ</button>
+                <button type="submit" className={styles.primaryBtn} disabled={submissionStatus === 'submitting'}>
+                  {submissionStatus === 'submitting'
+                    ? 'ZAPISYWANIE…'
+                    : retryable
+                    ? 'PONÓW ZAPIS'
+                    : 'ZAREZERWUJ STOLIK'}
+                </button>
+              </div>
             </div>
           </form>
         )}
 
-        {/* 4: potwierdzenie */}
-        {step === 4 && (
+        {/* Krok 4: Potwierdzenie */}
+        {step === 4 && savedReservation && (
           <div className={styles.confirmationCard}>
             <div className={styles.checkCircle}>✓</div>
-            <h2 className={styles.confTitle}>Rezerwacja potwierdzona!</h2>
-            <p className={styles.confText}>Wysłaliśmy potwierdzenie na Twój e-mail: <strong>{formData.email}</strong></p>
+            <h2 className={styles.confTitle}>Rezerwacja została zapisana!</h2>
+            <p className={styles.confText}>Dziękujemy. Restauracja otrzymała dane rezerwacji.</p>
             <div className={styles.summaryBox}>
-              Data: {formData.selectedDay} {months[monthIndex]} {year} | Godzina: {formData.selectedTime} | Osób: {formData.guests} | Sala: {formData.selectedHall}
+              Data: {savedReservation.serviceDate} | Godzina: {savedReservation.time} | Osób: {savedReservation.guests} | Sala: {savedReservation.hall}
             </div>
-            <button className={styles.primaryBtn} onClick={() => navigate('/')}>POWRÓT DO STRONY GŁÓWNEJ</button>
+            <button type="button" className={styles.primaryBtn} onClick={() => navigate('/')}>POWRÓT DO STRONY GŁÓWNEJ</button>
           </div>
         )}
       </div>
     </div>
   );
 }
-
-export default Reservations;

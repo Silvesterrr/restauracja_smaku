@@ -1,4 +1,5 @@
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/useAuth';
 import styles from './Navbar.module.css';
 
 const NAV_LINKS = [
@@ -12,9 +13,16 @@ const NAV_LINKS = [
 
 function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isStaff, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
 
   return (
-    <nav className={styles.nav}>
+    <nav className={styles.nav} aria-label="Główna nawigacja">
       <div className={styles.inner}>
         <Link to="/" className={styles.brandLink}>
           <span className={styles.brand}>RESTAURACJA SMAK</span>
@@ -30,11 +38,35 @@ function Navbar() {
               {l.label}
             </NavLink>
           ))}
+          
+          {/* Panel Admina widoczny tylko dla zalogowanej obsługi */}
+          {isStaff && (
+            <NavLink 
+              to="/admin" 
+              className={({ isActive }) => `${styles.link} ${isActive ? styles.linkActive : ''}`}
+            >
+              PANEL
+            </NavLink>
+          )}
         </div>
 
-        <button className={styles.cta} onClick={() => navigate('/rezerwacje')}>
-          ZAREZERWUJ STOLIK
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <button className={styles.cta} type="button" onClick={() => navigate('/rezerwacje')}>
+            ZAREZERWUJ STOLIK
+          </button>
+          
+          {/* Przycisk wylogowania widoczny tylko dla zalogowanych */}
+          {isStaff && (
+            <button
+              className={styles.logoutButton || styles.cta} // Zabezpieczenie na wypadek braku klasy w module
+              type="button"
+              onClick={handleLogout}
+              style={{ background: '#DC2626', borderColor: '#DC2626' }} // Czerwony kolor dla wylogowania
+            >
+              WYLOGUJ
+            </button>
+          )}
+        </div>
       </div>
     </nav>
   );
