@@ -54,6 +54,15 @@ Projekt jest demonstracją. Publicznego formularza nie należy łączyć z realn
 danymi klientów bez App Check/reCAPTCHA lub backendowego limitowania żądań,
 monitoringu kosztów i ustalonej retencji danych.
 
+
+## Integracja Google Analytics z Vercel
+
+1. **Zmienne Środowiskowe:** Identyfikator `G-########` wstrzykiwany jest przez zmienną `import.meta.env.VITE_GOOGLE_ANALYTICS_ID` w panelu **Vercel** (Settings -> Environment Variables)
+
+2. **Obsługa SPA (React Router):** Ze względu na brak przeładowań strony w architekturze SPA, w pliku `src/App.jsx` zaimplementowano komponent `<AnalyticsTracker />`. Wykorzystuje on hook `useLocation()`, aby przy każdej zmianie podstrony (np. `/menu`, `/kontakt`) automatycznie wysłać zdarzenie do GA4.
+
+**Przepływ:** Kliknięcie linku -> React Router (`useLocation`) -> Odczyt klucza z Vercel -> Panel GA4
+
 ### Raport Google Analytics w czasie rzeczywistym na zdeployowanej aplikacji na vercelu:
 ![Panel Real-time Google Analytics](./googleanalytics.png)
 ![Panel Real-time Google Analytics](./googleanalytics2.png)
