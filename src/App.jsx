@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import styles from './App.module.css';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -16,9 +17,56 @@ import AdminPanel from './pages/AdminPanel';
 import { AuthProvider } from './auth/AuthContext';
 import PrivateRoute from './auth/PrivateRoute';
 
+
+function AnalyticsTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const hotjarId = import.meta.env.VITE_HOTJAR_ID;
+    if (hotjarId && !window.hotjarInitialized) {
+      const hjScript = document.createElement('script');
+      hjScript.src = `https://t.contentsquare.net/uxa/${hotjarId}.js`;
+      hjScript.async = true;
+      document.head.appendChild(hjScript);
+      window.hotjarInitialized = true; // Zabezpieczenie przed podwójnym ładowaniem
+      console.log("Hotjar (Contentsquare) zainicjalizowany!");
+    }
+
+    // 2. Inicjalizacja Google Analytics (GA4)
+    const gaId = import.meta.env.VITE_GOOGLE_ANALYTICS_ID;
+    if (gaId && !window.gaInitialized) {
+      const gaScript = document.createElement('script');
+      gaScript.async = true;
+      gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+      document.head.appendChild(gaScript);
+
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function() { window.dataLayer.push(arguments); };
+      window.gtag('js', new Date());
+      window.gtag('config', gaId);
+      window.gaInitialized = true; 
+      console.log("Google Analytics zainicjalizowane!");
+    }
+  }, []);
+
+  
+  useEffect(() => {
+    const gaId = import.meta.env.VITE_GOOGLE_ANALYTICS_ID;
+    if (gaId && window.gtag) {
+      window.gtag('config', gaId, {
+        page_path: location.pathname,
+      });
+    }
+  }, [location]);
+
+  return null; 
+}
+
+
 function App() {
   return (
     <Router>
+      <AnalyticsTracker /> {/* Uruchamia analitykę wewnątrz kontekstu Routera */}
       <AuthProvider>
         <div className={styles.app}>
           <Navbar />
