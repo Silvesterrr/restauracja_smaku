@@ -67,7 +67,6 @@ monitoringu kosztów i ustalonej retencji danych.
 ![Panel Real-time Google Analytics](./googleanalytics.png)
 ![Panel Real-time Google Analytics](./googleanalytics2.png)
 
-
 ## Opis aplikacji
 
 **Restauracja Smak** to witryna internetowa dla fikcyjnej restauracji serwującej kuchnię polską z nowoczesnym akcentem. Aplikacja została zbudowana w **React + Vite** z **Firebase** jako backendem (Firestore, Authentication) i wdrożona na platformie **Vercel**.
